@@ -1,0 +1,96 @@
+SELECT *
+FROM expanded_products;
+
+SELECT *
+FROM expanded_sales;
+
+SELECT *
+FROM sales_reps;
+
+SELECT *
+FROM stores;
+
+--- Check for number of rows for all four tables---
+SELECT COUNT(*)
+FROM expanded_products;
+SELECT COUNT(*)
+FROM expanded_sales;
+SELECT COUNT(*)
+FROM sales_reps;
+SELECT COUNT(*)
+FROM stores;
+--- Check for number of columns for all four tables---
+SELECT COUNT(*) 
+FROM INFORMATION_SCHEMA.COLUMNS 
+WHERE TABLE_SCHEMA = 'sql_project' 
+AND TABLE_NAME = 'expanded_sales';
+SELECT COUNT(*) 
+FROM INFORMATION_SCHEMA.COLUMNS 
+WHERE TABLE_SCHEMA = 'sql_project' 
+AND TABLE_NAME = 'expanded_products';
+SELECT COUNT(*) 
+FROM INFORMATION_SCHEMA.COLUMNS 
+WHERE TABLE_SCHEMA = 'sql_project' 
+AND TABLE_NAME = 'sales_reps';
+SELECT COUNT(*) 
+FROM INFORMATION_SCHEMA.COLUMNS 
+WHERE TABLE_SCHEMA = 'sql_project' 
+AND TABLE_NAME = 'stores';
+
+---- 1. Total Sales by Category and Store---
+SELECT p.Category, st.StoreName, 
+FORMAT(SUM(s.TotalPrice), 2) AS TotalSales
+FROM expanded_sales AS s
+JOIN expanded_products AS  p 
+ON s.ProductID = p.ProductID
+JOIN Stores AS st 
+ON s.StoreID = st.StoreID
+GROUP BY p.Category, st.StoreName
+ORDER BY TotalSales DESC;
+
+--- 2. Top 5 Sales Representatives by Total Sales----
+SELECT sr.SalesRepName, 
+FORMAT(SUM(s.TotalPrice), 2) AS TotalSales
+FROM expanded_sales AS s
+JOIN Sales_Reps sr ON s.SalesRepID = sr.SalesRepID
+GROUP BY sr.SalesRepName
+ORDER BY TotalSales DESC
+LIMIT 5;
+
+---- 3. Sales Performance by Payment Method----
+SELECT PaymentMethod, 
+FORMAT(SUM(TotalPrice), 2) AS TotalSales, 
+COUNT(*) AS NumberOfSales
+FROM expanded_sales
+GROUP BY PaymentMethod
+ORDER BY NumberOfSales DESC;
+
+--- 5. Product Inventory Status---
+
+SELECT ProductName, Category, StockQuantity, ReorderLevel, 
+CASE WHEN StockQuantity <= ReorderLevel 
+THEN 'Reorder Needed' ELSE 'Stock Sufficient' END AS InventoryStatus
+FROM expanded_products;
+
+--- 6. Average Sales per Customer---
+SELECT AVG(TotalPrice) AS AverageSales
+FROM expanded_sales;
+
+--- 7. Sales Distribution by City----
+SELECT st.Location, 
+FORMAT(SUM(s.TotalPrice), 2) AS TotalSales
+FROM expanded_sales AS s
+JOIN Stores AS st 
+ON s.StoreID = st.StoreID
+GROUP BY st.Location
+ORDER BY TotalSales DESC;
+
+---- 8. Discontinued Products Sales----
+SELECT p.ProductName, p.Category, 
+FORMAT(SUM(s.TotalPrice), 2) AS TotalSales
+FROM expanded_sales AS s
+JOIN expanded_products AS p 
+ON s.ProductID = p.ProductID
+WHERE p.Discontinued = 'Yes'
+GROUP BY p.ProductName, p.Category
+ORDER BY TotalSales DESC;
